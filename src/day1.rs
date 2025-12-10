@@ -94,7 +94,7 @@ fn test_part2() {
 
 #[test]
 fn test_part2_prod() {
-    let input = std::fs::read_to_string("inputs/1.txt").unwrap();
+    let input = crate::fetch::fetch_input(1).unwrap();
     let parsed = parse(&input).unwrap();
     let res = part_2(parsed);
     assert_eq!(res, 6175);
