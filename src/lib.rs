@@ -2,3 +2,4 @@
 #![allow(unused_variables)]
 
 mod day1;
+mod day2;
