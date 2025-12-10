@@ -1,11 +1,4 @@
-import difflib
-
-
-def expect_equal(a, b):
-    if a != b:
-        diff = "\n".join(difflib.ndiff(str(a).splitlines(), str(b).splitlines()))
-        raise AssertionError(diff)
-
+from common import expect_equal
 
 example_input = """
 L68
@@ -95,7 +88,7 @@ L82
     3,
 )
 
-f = open("1.txt")
+f = open("inputs/1.txt")
 prod_input = f.read()
 f.close()
 expect_equal(algo(parse_input(prod_input)), 1102)
