@@ -34,21 +34,24 @@ fn is_invalid_id_part_1(n: usize) -> bool {
 }
 
 fn factorize(n: usize) -> Vec<usize> {
-    let mut factors = HashSet::new();
+    let mut small = Vec::new();
+    let mut large = Vec::new();
 
     let squared = (n as f64).sqrt() as usize;
 
     for i in 1..squared + 1 {
         if n % i == 0 {
-            factors.insert(i);
-            factors.insert(n / i);
+            small.push(i);
+            if n / i != i {
+                large.push(n / i)
+            }
         }
     }
 
-    let mut sl: Vec<usize> = factors.into_iter().collect();
-    sl.sort();
+    large.reverse();
+    small.extend(large);
 
-    sl
+    small
 }
 
 fn is_invalid_id_part_2(n: usize) -> bool {
