@@ -1,5 +1,3 @@
-use crate::fetch;
-
 const TEST_INPUT: &str = "987654321111111
 811111111111119
 234234234234278
@@ -128,14 +126,14 @@ fn test_part_1() {
 
 #[test]
 fn test_part_1_prod() {
-    let inp = parse_input(fetch::fetch_input(3).unwrap().as_str());
+    let inp = parse_input(crate::fetch::fetch_input(3).unwrap().as_str());
     let result = part_1(inp);
     assert_eq!(result, 17613);
 }
 
 #[test]
 fn test_part_2_prod() {
-    let inp = parse_input(fetch::fetch_input(3).unwrap().as_str());
+    let inp = parse_input(crate::fetch::fetch_input(3).unwrap().as_str());
     let result = part_2(inp);
     assert_eq!(result, 175304218462560);
 }
