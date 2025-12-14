@@ -14,14 +14,12 @@ fn parse_input(input: &str) -> Vec<Vec<usize>> {
         .collect()
 }
 
-fn part_1(arrays: Vec<Vec<usize>>) -> usize {
+fn algo(arrays: Vec<Vec<usize>>, n: usize) -> usize {
     let mut total = 0;
     for a in arrays {
-        let highest = highest_joltage(&a);
-        // println!("highest: {:?} {:?}", a, highest);
-        let a_str = highest.0.to_string();
-        let b_str = highest.1.to_string();
-        let ab_str = [a_str, b_str].join("");
+        let highest = highest_joltage_n(&a, n);
+        let ab_str: Vec<_> = highest.iter().map(|n| (*n as u8) + 48).collect();
+        let ab_str = str::from_utf8(&ab_str).unwrap();
         let ab: usize = ab_str.parse().unwrap();
         total += ab
     }
@@ -29,17 +27,20 @@ fn part_1(arrays: Vec<Vec<usize>>) -> usize {
     total
 }
 
-fn highest_joltage(array: &Vec<usize>) -> (usize, usize) {
-    // let (ign, max1) = max(array, None);
-    // let (_, max2) = max(array, Some(ign));
+fn part_1(arrays: Vec<Vec<usize>>) -> usize {
+    algo(arrays, 2)
+}
 
-    // (max1, max2)
+fn part_2(arrays: Vec<Vec<usize>>) -> usize {
+    algo(arrays, 12)
+}
 
+fn highest_joltage(array: &Vec<usize>) -> Vec<usize> {
     let mut max1 = 0;
     let mut max2 = 0;
-    for i in 0..array.len()-1 {
+    for i in 0..array.len() - 1 {
         let a = array[i];
-        let b = array[i+1];
+        let b = array[i + 1];
 
         if a > max1 {
             max1 = a;
@@ -50,21 +51,42 @@ fn highest_joltage(array: &Vec<usize>) -> (usize, usize) {
         }
     }
 
-    (max1, max2)
+    vec![max1, max2]
 }
 
-fn max(array: &Vec<usize>, ignore_idx: Option<usize>) -> (usize, usize) {
-    let mut max = 0;
-    let mut max_i = 0;
-    for (i, b) in array.iter().enumerate() {
-        if *b > max && (ignore_idx.is_none() || (ignore_idx.is_some() && i != ignore_idx.unwrap()))
-        {
-            max = *b;
-            max_i = i;
+fn highest_joltage_n(array: &Vec<usize>, n: usize) -> Vec<usize> {
+    let mut maxes = vec![0; n];
+
+    for i in 0..array.len() - n + 1 {
+        let mut reset_consecutive = false;
+        for j in i..i + n {
+            let idx = j - i;
+
+            if reset_consecutive {
+                maxes[idx] = 0
+            }
+
+            if array[j] > maxes[idx] {
+                maxes[idx] = array[j];
+                reset_consecutive = true;
+            }
         }
     }
 
-    (max_i, max)
+    maxes
+}
+
+#[test]
+fn test_highest_joltage_n() {
+    let myassert = |given, expected: &str| {
+        let expected: Vec<usize> = expected.bytes().map(|b| (b - 48) as usize).collect();
+        assert_eq!(highest_joltage_n(&parse_input(given)[0], 12), expected);
+    };
+
+    myassert("987654321111111", "987654321111");
+    myassert("811111111111119", "811111111119");
+    myassert("234234234234278", "434234234278");
+    myassert("818181911112111", "888911112111");
 }
 
 #[test]
@@ -73,19 +95,23 @@ fn test_parse_input() {
 }
 
 #[test]
-fn max_test() {
-    assert_eq!(max(&vec![1, 2, 3, 4, 5], None), (4, 5));
-    assert_eq!(max(&vec![3,2,1], None), (0, 3));
-    assert_eq!(max(&vec![5, 2, 3, 4, 5], None), (0, 5));
-    assert_eq!(max(&vec![1, 2, 3, 4, 5], Some(4)), (3, 4));
-}
-
-#[test]
 fn test_highest_joltage() {
-    assert_eq!(highest_joltage(&parse_input("987654321111111")[0]), (9, 8));
-    assert_eq!(highest_joltage(&parse_input("811111111111119")[0]), (8, 9));
-    assert_eq!(highest_joltage(&parse_input("234234234234278")[0]), (7, 8));
-    assert_eq!(highest_joltage(&parse_input("818181911112111")[0]), (9, 2));
+    assert_eq!(
+        highest_joltage(&parse_input("987654321111111")[0]),
+        vec![9, 8]
+    );
+    assert_eq!(
+        highest_joltage(&parse_input("811111111111119")[0]),
+        vec![8, 9]
+    );
+    assert_eq!(
+        highest_joltage(&parse_input("234234234234278")[0]),
+        vec![7, 8]
+    );
+    assert_eq!(
+        highest_joltage(&parse_input("818181911112111")[0]),
+        vec![9, 2]
+    );
 }
 
 // 818181911112111
@@ -105,4 +131,11 @@ fn test_part_1_prod() {
     let inp = parse_input(fetch::fetch_input(3).unwrap().as_str());
     let result = part_1(inp);
     assert_eq!(result, 17613);
+}
+
+#[test]
+fn test_part_2_prod() {
+    let inp = parse_input(fetch::fetch_input(3).unwrap().as_str());
+    let result = part_2(inp);
+    assert_eq!(result, 175304218462560);
 }
