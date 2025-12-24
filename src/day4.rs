@@ -36,6 +36,31 @@ fn part1(matrix: Vec<Vec<char>>) -> usize {
     count_valid_rolls
 }
 
+fn part2(mut matrix: Vec<Vec<char>>) -> usize {
+    let mut total_removed = 0;
+
+    loop {
+        let mut removed = false;
+
+        for y in 0..matrix.len() {
+            for x in 0..matrix[0].len() {
+                if valid(&matrix, x, y, 4) {
+                    matrix[y][x] = '.';
+
+                    total_removed += 1;
+                    removed = true
+                }
+            }
+        }
+
+        if !removed {
+            break;
+        }
+    }
+
+    total_removed
+}
+
 fn valid(matrix: &Vec<Vec<char>>, x: usize, y: usize, max: usize) -> bool {
     if matrix[y][x] != '@' {
         return false;
@@ -107,4 +132,17 @@ fn test_part1_prod() {
     let inp = parse_input(crate::fetch::fetch_input(4).unwrap().as_str());
     let result = part1(inp);
     assert_eq!(result, 1395);
+}
+
+#[test]
+fn test_part2() {
+    let matrix = parse_input(TEST_INPUT);
+    assert_eq!(part2(matrix), 43);
+}
+
+#[test]
+fn test_part2_prod() {
+    let inp = parse_input(crate::fetch::fetch_input(4).unwrap().as_str());
+    let result = part2(inp);
+    assert_eq!(result, 8451);
 }
