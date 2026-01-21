@@ -30,13 +30,13 @@ trait Intersects {
 
 impl Intersects for (usize, usize) {
     fn intersects(&self, other: &(usize, usize)) -> bool {
-        (self.1 >= other.0 && self.0 < other.1) || (self.0 <=other.1 && self.0 >= other.1)
+        (self.1 >= other.0 && self.0 < other.1) || (self.0 <= other.1 && self.0 >= other.1)
     }
 }
 
 // a b
 //  c d
-// 
+//
 //  a b
 // c d
 
@@ -44,42 +44,51 @@ fn merge(a: &(usize, usize), b: &(usize, usize)) -> (usize, usize) {
     if !a.intersects(b) {
         panic!("ranges do not intersect")
     }
-    
+
     let mut all = vec![a.0, a.1, b.0, b.1];
     all.sort();
-    
+
     (all[0], all[3])
 }
 
 fn parse_input(input: &str) -> (Vec<(usize, usize)>, Vec<usize>) {
     let input = input.trim();
     let (ranges, products) = input.split_at(input.find("\n\n").unwrap());
-    
-    let ranges = ranges.trim().as_bytes().lines().map(|l|  {
-        let l = l.unwrap();
-        let spl: Vec<_> = l.split('-').collect();
-        let a: usize = spl[0].parse().unwrap();
-        let b: usize = spl[1].parse().unwrap();
-        (a, b)
-    }).collect();
-    
-    let products = products.trim().lines().map(|l| l.parse().unwrap()).collect();
-    
+
+    let ranges = ranges
+        .trim()
+        .as_bytes()
+        .lines()
+        .map(|l| {
+            let l = l.unwrap();
+            let spl: Vec<_> = l.split('-').collect();
+            let a: usize = spl[0].parse().unwrap();
+            let b: usize = spl[1].parse().unwrap();
+            (a, b)
+        })
+        .collect();
+
+    let products = products
+        .trim()
+        .lines()
+        .map(|l| l.parse().unwrap())
+        .collect();
+
     (ranges, products)
 }
 
 fn part1(ranges: Vec<(usize, usize)>, products: Vec<usize>) -> usize {
     let mut count = 0;
-    
+
     for p in products.iter() {
         for r in ranges.iter() {
             if r.contains(p) {
                 count += 1;
-                break
+                break;
             }
         }
     }
-    
+
     count
 }
 
@@ -94,14 +103,14 @@ fn part2(ranges: Vec<(usize, usize)>, products: Vec<usize>) -> usize {
             std::cmp::Ordering::Equal
         }
     });
-    
+
     let mut merged: Vec<(usize, usize)> = vec![];
     for r in ranges {
         if merged.len() == 0 {
             merged.push(r);
-            continue
+            continue;
         }
-        
+
         let last = merged.last().unwrap();
         if last.intersects(&r) {
             let l = merged.len();
@@ -110,12 +119,12 @@ fn part2(ranges: Vec<(usize, usize)>, products: Vec<usize>) -> usize {
             merged.push(r)
         }
     }
-    
+
     let mut total = 0;
     for r in merged {
         total += r.1 - r.0 + 1
     }
-    
+
     total
 }
 
@@ -156,10 +165,10 @@ fn test_part2_prod() {
 fn test_intersects() {
     assert_eq!((1, 2).intersects(&(3, 4)), false);
     assert_eq!((3, 4).intersects(&(1, 2)), false);
-    
+
     assert_eq!((1, 2).intersects(&(2, 3)), true);
     assert_eq!((2, 3).intersects(&(1, 2)), true);
-    
+
     assert_eq!((1, 3).intersects(&(2, 3)), true);
     assert_eq!((2, 3).intersects(&(1, 3)), true);
 }
