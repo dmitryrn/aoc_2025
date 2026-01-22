@@ -1,9 +1,9 @@
-const TEST_INPUT: &str = "123 328  51 64
- 45 64  387 23
+const TEST_INPUT: &str = "123 328  51 64 
+ 45 64  387 23 
   6 98  215 314
-*   +   *   + ";
+*   +   *   +  ";
 
-fn parse_input(input: &str) -> (Vec<Vec<usize>>, Vec<char>) {
+fn parse_input_part_1(input: &str) -> (Vec<Vec<usize>>, Vec<char>) {
     let lines: Vec<&str> = input.trim().lines().collect();
 
     let matrix: Vec<Vec<usize>> = lines[..lines.len() - 1]
@@ -46,9 +46,78 @@ fn part1(matrix: Vec<Vec<usize>>, operators: Vec<char>) -> usize {
     total
 }
 
+fn part2(input: &str) -> usize {
+    let last = input.lines().last().unwrap();
+
+    let mut operator_indexes = vec![];
+    let mut operators = vec![];
+    for (i, c) in last.chars().enumerate() {
+        if c == '*' || c == '+' {
+            operator_indexes.push(i);
+            operators.push(c);
+        }
+    }
+
+    let height = input.lines().count() - 1;
+    let width = last.len();
+    println!("w{} '{}'", width, last);
+
+    let input_b: Vec<_> = input.chars().collect();
+
+    let mut total = 0;
+
+    for i in 0..operator_indexes.len() {
+        let end_idx = if i + 1 < operator_indexes.len() {
+            operator_indexes[i + 1]
+        } else {
+            width + 1
+        };
+        let pair = (operator_indexes[i], end_idx);
+
+        let start = pair.0;
+        let end = pair.1 - 1;
+        let op = operators[i];
+        println!("pair{} {}", pair.0, pair.1);
+
+        let mut local_total: usize = 0;
+        if op == '+' {
+            local_total = 0;
+        } else {
+            local_total = 1;
+        }
+
+        for x in start..end {
+            let mut num_str = String::new();
+            for y in 0..height {
+                let i = x + (width + 1) * y;
+                let mut c = input_b[i];
+                if c == ' ' {
+                    c = '_';
+                }
+                println!("{} {} {} {}", x, y, i, c);
+
+                if c != '_' {
+                    num_str.push(c);
+                }
+            }
+
+            let num: usize = num_str.parse().unwrap();
+            println!("num{}", num);
+
+            println!("--- {} {} {}", local_total, op, num);
+            local_total = apply_op(local_total, op, num)
+        }
+
+        println!("lt{}", local_total);
+        total += local_total;
+    }
+
+    total
+}
+
 #[test]
 fn test_parse_input() {
-    let (matrix, operators) = parse_input(TEST_INPUT);
+    let (matrix, operators) = parse_input_part_1(TEST_INPUT);
     assert_eq!(
         matrix,
         vec![
@@ -62,14 +131,26 @@ fn test_parse_input() {
 
 #[test]
 fn test_part1() {
-    let (matrix, operators) = parse_input(TEST_INPUT);
+    let (matrix, operators) = parse_input_part_1(TEST_INPUT);
     let result = part1(matrix, operators);
     assert_eq!(result, 4277556);
 }
 
 #[test]
 fn test_part1_prod() {
-    let (matrix, operators) = parse_input(crate::fetch::fetch_input(6).unwrap().as_str());
+    let (matrix, operators) = parse_input_part_1(crate::fetch::fetch_input(6).unwrap().as_str());
     let result = part1(matrix, operators);
     assert_eq!(result, 6343365546996);
+}
+
+#[test]
+fn test_part2() {
+    let result = part2(TEST_INPUT);
+    assert_eq!(result, 3263827);
+}
+
+#[test]
+fn test_part2_prod() {
+    let result = part2(crate::fetch::fetch_input(6).unwrap().as_str());
+    assert_eq!(result, 11136895955912);
 }
