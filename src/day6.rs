@@ -79,12 +79,7 @@ fn part2(input: &str) -> usize {
         let op = operators[i];
         println!("pair{} {}", pair.0, pair.1);
 
-        let mut local_total: usize = 0;
-        if op == '+' {
-            local_total = 0;
-        } else {
-            local_total = 1;
-        }
+        let mut local_total: usize = if op == '+' { 0 } else { 1 };
 
         for x in start..end {
             let mut num_str = String::new();
