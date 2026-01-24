@@ -42,11 +42,9 @@ pub fn print_circuit_sizes(circuit_map: &std::collections::HashMap<(usize, usize
     println!("Circuits with 1 point: {}", single_point_circuits);
 }
 
-pub fn part1(inp: Vec<(usize, usize, usize)>) -> usize {
+pub fn part1(inp: Vec<(usize, usize, usize)>, n: usize) -> usize {
     use std::cmp::Reverse;
     use std::collections::{BinaryHeap, HashMap};
-
-    let n = 10;
     let mut heap: BinaryHeap<Reverse<(usize, (usize, usize, usize), (usize, usize, usize))>> =
         BinaryHeap::new();
 
@@ -131,5 +129,13 @@ fn test_parse() {
 fn test_part1() {
     let input_str = read_test_input();
     let input = parse(&input_str).unwrap();
-    assert_eq!(part1(input), 40);
+    assert_eq!(part1(input, 10), 40);
+}
+
+#[test]
+fn test_part1_prod() {
+    let input = crate::fetch::fetch_input(8).unwrap();
+    let parsed = parse(&input).unwrap();
+    let res = part1(parsed, 1000);
+    assert_eq!(res, 164475);
 }
