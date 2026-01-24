@@ -20,133 +20,88 @@ pub fn read_test_input() -> String {
     std::fs::read_to_string("src/day8/test_input.txt").expect("Failed to read test input")
 }
 
-pub fn find_distances(
-    inp: &[(usize, usize, usize)],
-) -> std::collections::HashMap<(usize, usize), Vec<((usize, usize), usize)>> {
-    let mut distances: std::collections::HashMap<(usize, usize), Vec<((usize, usize), usize)>> =
-        std::collections::HashMap::new();
+pub fn print_circuit_sizes(circuit_map: &std::collections::HashMap<(usize, usize, usize), usize>) {
+    use std::collections::HashMap;
 
-    for (i, (x1, y1, _)) in inp.iter().enumerate() {
-        for (j, (x2, y2, _)) in inp.iter().enumerate() {
-            if i != j {
-                let distance = ((*x1 as isize - *x2 as isize).abs()
-                    + (*y1 as isize - *y2 as isize).abs()) as usize;
-                let coord1 = (*x1, *y1);
-                let coord2 = (*x2, *y2);
-                distances
-                    .entry(coord1)
-                    .or_insert_with(Vec::new)
-                    .push((coord2, distance));
-            }
+    let mut circuit_counts: HashMap<usize, usize> = HashMap::new();
+    for &id in circuit_map.values() {
+        *circuit_counts.entry(id).or_insert(0) += 1;
+    }
+
+    let mut circuit_sizes: Vec<(usize, usize)> = circuit_counts.into_iter().collect();
+    circuit_sizes.sort_by(|a, b| b.1.cmp(&a.1));
+
+    println!("Circuits (by size, descending):");
+    for (circuit_id, size) in &circuit_sizes {
+        if *size > 1 {
+            println!("Circuit {}: {} points", circuit_id, size);
         }
     }
 
-    distances
+    let single_point_circuits = circuit_sizes.iter().filter(|(_, size)| *size == 1).count();
+    println!("Circuits with 1 point: {}", single_point_circuits);
 }
 
 pub fn part1(inp: Vec<(usize, usize, usize)>) -> usize {
     use std::cmp::Reverse;
-    use std::collections::{BinaryHeap, HashSet};
+    use std::collections::{BinaryHeap, HashMap};
 
     let n = 10;
     let mut heap: BinaryHeap<Reverse<(usize, (usize, usize, usize), (usize, usize, usize))>> =
         BinaryHeap::new();
 
-    for (i, (x1, y1, z1)) in inp.iter().enumerate() {
-        for (j, (x2, y2, z2)) in inp.iter().enumerate() {
-            if i != j {
-                let dx = (*x1 as isize - *x2 as isize).abs() as f64;
-                let dy = (*y1 as isize - *y2 as isize).abs() as f64;
-                let dz = (*z1 as isize - *z2 as isize).abs() as f64;
-                let distance = ((dx * dx + dy * dy + dz * dz).sqrt()).round() as usize;
+    for i in 0..inp.len() {
+        let (x1, y1, z1) = inp[i];
+        for j in (i + 1)..inp.len() {
+            let (x2, y2, z2) = inp[j];
+            let dx = (x1 as isize - x2 as isize) as isize;
+            let dy = (y1 as isize - y2 as isize) as isize;
+            let dz = (z1 as isize - z2 as isize) as isize;
+            let dist2 = (dx * dx + dy * dy + dz * dz) as usize;
 
-                let coord1 = (*x1, *y1, *z1);
-                let coord2 = (*x2, *y2, *z2);
-                heap.push(Reverse((distance, coord1, coord2)));
-            }
+            let coord1 = (x1, y1, z1);
+            let coord2 = (x2, y2, z2);
+            heap.push(Reverse((dist2, coord1, coord2)));
         }
     }
 
-    println!("Heap size {}", heap.len());
-
-    let mut connections: HashSet<((usize, usize, usize), (usize, usize, usize))> = HashSet::new();
-    let mut circuit_map: std::collections::HashMap<(usize, usize, usize), usize> =
-        std::collections::HashMap::new();
+    // Initialize circuit_map: each point is its own circuit
+    let mut circuit_map: HashMap<(usize, usize, usize), usize> = HashMap::new();
     let mut next_circuit_id: usize = 1;
 
-    while let Some(Reverse((dist, from, to))) = heap.pop() {
-        // Order coordinates consistently so we only need to check one direction
-        let (coord1, coord2) = if from < to { (from, to) } else { (to, from) };
+    for &coord in inp.iter() {
+        circuit_map.insert(coord, next_circuit_id);
+        next_circuit_id += 1;
+    }
 
-        if !connections.contains(&(coord1, coord2)) {
-            connections.insert((coord1, coord2));
-
-            let circuit_id = match (circuit_map.get(&coord1), circuit_map.get(&coord2)) {
-                (Some(&id1), Some(&id2)) => {
-                    // Both already in circuits - merge them (keep id1, update id2 to id1)
-                    if id1 != id2 {
-                        // Reassign all points from id2 to id1
-                        let points_to_reassign: Vec<(usize, usize, usize)> = circuit_map
-                            .iter()
-                            .filter(|(_, id)| **id == id2)
-                            .map(|(coord, _)| *coord)
-                            .collect();
-                        for coord in points_to_reassign {
-                            circuit_map.remove(&coord);
-                            circuit_map.insert(coord, id1);
-                        }
-                    }
-                    id1
+    let mut edges_processed = 0;
+    while edges_processed < n {
+        if let Some(Reverse((_, from, to))) = heap.pop() {
+            edges_processed += 1;
+    
+            let id1 = circuit_map[&from];
+            let id2 = circuit_map[&to];
+    
+            if id1 != id2 {
+                let coords_to_reassign: Vec<_> = circuit_map
+                    .iter()
+                    .filter(|(_, id)| **id == id2)
+                    .map(|(coord, _)| *coord)
+                    .collect();
+    
+                for coord in coords_to_reassign {
+                    circuit_map.insert(coord, id1);
                 }
-                (Some(&id), None) => {
-                    // coord2 is new, add to coord1's circuit
-                    circuit_map.insert(coord2, id);
-                    id
-                }
-                (None, Some(&id)) => {
-                    // coord1 is new, add to coord2's circuit
-                    circuit_map.insert(coord1, id);
-                    id
-                }
-                (None, None) => {
-                    // Both are new, create new circuit
-                    let id = next_circuit_id;
-                    circuit_map.insert(coord1, id);
-                    circuit_map.insert(coord2, id);
-                    next_circuit_id += 1;
-                    id
-                }
-            };
-
-            println!(
-                "Connection: {} from {:?} to {:?} (circuit {})",
-                dist, coord1, coord2, circuit_id
-            );
-        }
-
-        if connections.len() >= n {
+            }
+    
+            print_circuit_sizes(&circuit_map);
+            println!("-----------------------------");
+        } else {
             break;
         }
     }
 
-    let mut circuit_counts: std::collections::HashMap<usize, usize> =
-        std::collections::HashMap::new();
-    for &id in circuit_map.values() {
-        *circuit_counts.entry(id).or_insert(0) += 1;
-    }
-
-    let mut sorted_circuits: Vec<(&usize, &usize)> = circuit_counts.iter().collect();
-    sorted_circuits.sort_by(|a, b| b.1.cmp(a.1));
-
-    let points_in_circuits = circuit_map.len();
-    let points_not_in_circuits = inp.len() - points_in_circuits;
-
-    println!("\nCircuits (by size, descending):");
-    for (circuit_id, count) in sorted_circuits {
-        println!("Circuit {}: {} points", circuit_id, count);
-    }
-    println!("Total circuits: {}", circuit_counts.len());
-    println!("Points not in any circuit: {}", points_not_in_circuits);
+    print_circuit_sizes(&circuit_map);
 
     todo!()
 }
@@ -163,23 +118,4 @@ fn test_part1() {
     let input_str = read_test_input();
     let input = parse(&input_str).unwrap();
     part1(input);
-}
-
-#[test]
-fn test_part1_simple() {
-    let input = parse("0,0,0\n3,4,0\n6,0,0").unwrap();
-    let distances = find_distances(&input);
-
-    let expected_distances: std::collections::HashMap<
-        (usize, usize),
-        Vec<((usize, usize), usize)>,
-    > = [
-        ((0, 0), vec![((3, 4), 7), ((6, 0), 6)]),
-        ((3, 4), vec![((0, 0), 7), ((6, 0), 7)]),
-        ((6, 0), vec![((0, 0), 6), ((3, 4), 7)]),
-    ]
-    .into_iter()
-    .collect();
-
-    assert_eq!(distances, expected_distances);
 }
