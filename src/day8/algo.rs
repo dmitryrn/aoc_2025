@@ -78,22 +78,22 @@ pub fn part1(inp: Vec<(usize, usize, usize)>) -> usize {
     while edges_processed < n {
         if let Some(Reverse((_, from, to))) = heap.pop() {
             edges_processed += 1;
-    
+
             let id1 = circuit_map[&from];
             let id2 = circuit_map[&to];
-    
+
             if id1 != id2 {
                 let coords_to_reassign: Vec<_> = circuit_map
                     .iter()
                     .filter(|(_, id)| **id == id2)
                     .map(|(coord, _)| *coord)
                     .collect();
-    
+
                 for coord in coords_to_reassign {
                     circuit_map.insert(coord, id1);
                 }
             }
-    
+
             print_circuit_sizes(&circuit_map);
             println!("-----------------------------");
         } else {
@@ -103,7 +103,21 @@ pub fn part1(inp: Vec<(usize, usize, usize)>) -> usize {
 
     print_circuit_sizes(&circuit_map);
 
-    todo!()
+    // Calculate circuit sizes
+    let mut circuit_counts: std::collections::HashMap<usize, usize> =
+        std::collections::HashMap::new();
+    for &id in circuit_map.values() {
+        *circuit_counts.entry(id).or_insert(0) += 1;
+    }
+
+    // Get the three largest circuit sizes
+    let mut sizes: Vec<usize> = circuit_counts.into_iter().map(|(_, size)| size).collect();
+    sizes.sort_by(|a, b| b.cmp(a));
+
+    let top_three: Vec<usize> = sizes.into_iter().take(3).collect();
+
+    // Multiply together the sizes of the three largest circuits
+    top_three.into_iter().product()
 }
 
 #[test]
@@ -117,5 +131,5 @@ fn test_parse() {
 fn test_part1() {
     let input_str = read_test_input();
     let input = parse(&input_str).unwrap();
-    part1(input);
+    assert_eq!(part1(input), 40);
 }
